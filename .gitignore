@@ -1,6 +1,33 @@
-node_modules
+# Environment files
 .env
-dist
-build
+
+# Node modules
+**/node_modules/
+**/dist/
+**/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs
 *.log
+npm-debug.log*
+
+# Database
+*.db
+*.sqlite
+
+# Java/Gradle
+**/target/
+**/.gradle/
+**/build/
+
+# Docker
+**/*.pid
