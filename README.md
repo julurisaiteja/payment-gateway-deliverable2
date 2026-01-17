@@ -282,7 +282,7 @@ Response:
 
 ---
 
-## 🎨 Screenshots (unchanged)
+## 🎨 Screenshots
 
 ### Dashboard
 ![Dashboard Home](screenshots/dashboard.png)
@@ -294,7 +294,7 @@ Response:
 
 ---
 
-## 🎥 Demo Video (unchanged)
+## 🎥 Demo Video
 
 Watch the complete payment flow demonstration:  
 [Video Link](https://youtu.be/-Dsm5MRfrRQ?si=xe2Zm4GEwlq_LCqn)
