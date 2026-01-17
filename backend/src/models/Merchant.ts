@@ -1,6 +1,10 @@
+// backend/src/models/Merchant.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, Index
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 
 @Entity({ name: 'merchants' })
@@ -8,25 +12,26 @@ export class Merchant {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 100 })
   name!: string;
 
-  @Index({ unique: true })
-  @Column({ length: 255 })
+  @Column({ unique: true })
   email!: string;
 
-  @Index({ unique: true })
-  @Column({ length: 64 })
+  @Column()
   api_key!: string;
 
-  @Column({ length: 64 })
+  @Column()
   api_secret!: string;
-
-  @Column({ type: 'text', nullable: true })
-  webhook_url!: string | null;
 
   @Column({ type: 'boolean', default: true })
   is_active!: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  webhook_url!: string | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  webhook_secret!: string | null;
 
   @CreateDateColumn()
   created_at!: Date;

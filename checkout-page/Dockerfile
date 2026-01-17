@@ -12,8 +12,10 @@ COPY src ./src
 RUN npm run build
 
 FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+# expose SDK bundle as /checkout.js
+COPY checkout.js /usr/share/nginx/html/checkout.js
 
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]

@@ -1,7 +1,7 @@
+// backend/src/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../config/ormconfig';
 import { Merchant } from '../models/Merchant';
-import { authError } from '../services/errorResponse';
 
 export interface AuthedRequest extends Request {
   merchant?: Merchant;
@@ -12,14 +12,14 @@ export async function authMiddleware(req: AuthedRequest, res: Response, next: Ne
   const apiSecret = req.header('X-Api-Secret');
 
   if (!apiKey || !apiSecret) {
-    return authError(res);
+    return res.status(401).json({ error: { code: 'UNAUTHORIZED', description: 'Missing API credentials' } });
   }
 
-  const merchantRepo = AppDataSource.getRepository(Merchant);
-  const merchant = await merchantRepo.findOne({ where: { api_key: apiKey, api_secret: apiSecret } });
+  const repo = AppDataSource.getRepository(Merchant);
+  const merchant = await repo.findOne({ where: { api_key: apiKey, api_secret: apiSecret } });
 
   if (!merchant || !merchant.is_active) {
-    return authError(res);
+    return res.status(401).json({ error: { code: 'UNAUTHORIZED', description: 'Invalid API credentials' } });
   }
 
   req.merchant = merchant;

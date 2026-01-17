@@ -16,33 +16,82 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis_gateway
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   api:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: gateway_api
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://gateway_user:gateway_pass@postgres:5432/payment_gateway
-      PORT: 8000
+      REDIS_URL: redis://redis:6379
+      TEST_MODE: "true"
+      TEST_PROCESSING_DELAY: "1000"
+      TEST_PAYMENT_SUCCESS: "true"
+      WEBHOOK_RETRY_INTERVALS_TEST: "true"
+      TYPEORM_SYNCHRONIZE: "false"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    container_name: gateway_worker
+    environment:
+      DATABASE_URL: postgresql://gateway_user:gateway_pass@postgres:5432/payment_gateway
+      REDIS_URL: redis://redis:6379
+      TEST_MODE: "true"
+      TEST_PROCESSING_DELAY: "1000"
+      TEST_PAYMENT_SUCCESS: "true"
+      WEBHOOK_RETRY_INTERVALS_TEST: "true"
+      TYPEORM_SYNCHRONIZE: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
 
   dashboard:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     container_name: gateway_dashboard
     ports:
       - "3000:80"
     depends_on:
-      - api
+      api:
+        condition: service_started
 
   checkout:
     build:
       context: ./checkout-page
+      dockerfile: Dockerfile
     container_name: gateway_checkout
     ports:
       - "3001:80"
     depends_on:
-      - api
+      api:
+        condition: service_started

@@ -1,44 +1,37 @@
 // backend/src/models/Payment.ts
-
 import {
-  Entity, PrimaryColumn, Column, ManyToOne,
-  CreateDateColumn, UpdateDateColumn, Index, JoinColumn
+  Entity,
+  PrimaryColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
-import { Merchant } from './Merchant';
-import { Order } from './Order';
 
 @Entity({ name: 'payments' })
 export class Payment {
-  @PrimaryColumn({ length: 64 })
+  @PrimaryColumn()
   id!: string;
 
-  @Index()
-  @Column({ length: 64 })
+  @Column()
   order_id!: string;
 
-  @ManyToOne(() => Order)
-  @JoinColumn({ name: 'order_id' })
-  order!: Order;
-
-  @Column('uuid')
+  @Column()
   merchant_id!: string;
-
-  @ManyToOne(() => Merchant)
-  @JoinColumn({ name: 'merchant_id' })
-  merchant!: Merchant;
 
   @Column('integer')
   amount!: number;
 
-  @Column({ type: 'varchar', length: 3, default: 'INR' })
+  @Column({ length: 10 })
   currency!: string;
 
-  @Column({ type: 'varchar', length: 20 })
-  method!: string;
+  @Column({ length: 10 })
+  method!: 'upi' | 'card';
 
-  @Index()
-  @Column({ type: 'varchar', length: 20, default: 'created' })
-  status!: string;
+  @Column({ type: 'varchar', length: 20 })
+  status!: 'pending' | 'success' | 'failed';
+
+  @Column({ type: 'boolean', default: false })
+  captured!: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   vpa!: string | null;

@@ -31,3 +31,22 @@ npm-debug.log*
 
 # Docker
 **/*.pid
+# Test files
+resp1.json
+resp2.json
+sdk-test.html
+*.log
+NUL
+
+# Build artifacts
+node_modules/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
