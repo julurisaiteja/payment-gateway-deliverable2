@@ -3,13 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 
+const DEMO_MODE = typeof window !== 'undefined' && window.location.hostname.endsWith('.workers.dev');
+const DEMO_PAYMENTS = [
+  { id: 'pay_demo_2048', order_id: 'ord_8021', amount: 489900, method: 'upi', status: 'success', created_at: new Date(Date.now() - 12 * 60000).toISOString() },
+  { id: 'pay_demo_2047', order_id: 'ord_8020', amount: 129900, method: 'card', status: 'success', created_at: new Date(Date.now() - 31 * 60000).toISOString() },
+  { id: 'pay_demo_2046', order_id: 'ord_8019', amount: 74900, method: 'upi', status: 'processing', created_at: new Date(Date.now() - 52 * 60000).toISOString() },
+  { id: 'pay_demo_2045', order_id: 'ord_8018', amount: 219900, method: 'card', status: 'failed', created_at: new Date(Date.now() - 94 * 60000).toISOString() },
+  { id: 'pay_demo_2044', order_id: 'ord_8017', amount: 319900, method: 'card', status: 'success', created_at: new Date(Date.now() - 140 * 60000).toISOString() },
+];
+
 export default function Transactions() {
   const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [methodFilter, setMethodFilter] = useState('all');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setPayments(DEMO_PAYMENTS);
+      setLoading(false);
+      return;
+    }
+
     const apiKey = localStorage.getItem('apiKey');
     if (!apiKey) {
       navigate('/login');
@@ -35,9 +52,12 @@ export default function Transactions() {
     fetchPayments();
   }, [navigate]);
 
-  const filteredPayments = filter === 'all' 
-    ? payments 
-    : payments.filter(p => p.status === filter);
+  const filteredPayments = payments.filter((payment) => {
+    const matchesStatus = filter === 'all' || payment.status === filter;
+    const matchesMethod = methodFilter === 'all' || payment.method === methodFilter;
+    const matchesQuery = !query || `${payment.id} ${payment.order_id}`.toLowerCase().includes(query.toLowerCase());
+    return matchesStatus && matchesMethod && matchesQuery;
+  });
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -52,6 +72,22 @@ export default function Transactions() {
 
   function formatAmount(amount) {
     return `₹${(amount / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  }
+
+  function exportCsv() {
+    const rows = [
+      ['Payment ID', 'Order ID', 'Amount INR', 'Method', 'Status', 'Created'],
+      ...filteredPayments.map((payment) => [payment.id, payment.order_id, (payment.amount / 100).toFixed(2), payment.method, payment.status, payment.created_at]),
+    ];
+    const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'northstar-transactions.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function getStatusBadge(status) {
@@ -82,13 +118,19 @@ export default function Transactions() {
       <Navbar />
       
       <div className="container">
+        {DEMO_MODE && <div role="status" style={{ marginBottom: '16px', padding: '10px 12px', borderRadius: '8px', background: '#eaf4f1', color: '#0f766e', fontSize: '12px', fontWeight: 700 }}>Preview ledger · sample transactions only</div>}
         <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '32px', marginBottom: '4px' }}>Transactions</h1>
             <p className="text-muted">{filteredPayments.length} transaction{filteredPayments.length !== 1 ? 's' : ''} found</p>
           </div>
           
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <input aria-label="Search transactions" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search payment or order ID" style={{ width: '220px', padding: '8px 10px', fontSize: '13px' }} />
+            <select aria-label="Filter payment method" value={methodFilter} onChange={(event) => setMethodFilter(event.target.value)} style={{ width: '120px', padding: '8px 10px', fontSize: '13px' }}>
+              <option value="all">All methods</option><option value="upi">UPI</option><option value="card">Card</option>
+            </select>
+            <button className="btn-secondary" onClick={exportCsv} style={{ fontSize: '13px', padding: '8px 12px' }}>Export CSV</button>
             <button 
               className={filter === 'all' ? 'btn-primary' : 'btn-secondary'}
               onClick={() => setFilter('all')}
@@ -110,6 +152,7 @@ export default function Transactions() {
             >
               Failed
             </button>
+            <button className={filter === 'processing' ? 'btn-primary' : 'btn-secondary'} onClick={() => setFilter('processing')} style={{ fontSize: '13px', padding: '8px 16px' }}>Processing</button>
           </div>
         </div>
 

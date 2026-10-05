@@ -5,17 +5,17 @@
 }
 
 :root {
-  --primary: #5469d4;
-  --primary-dark: #3c51c5;
-  --secondary: #00d4ff;
+  --primary: #4054c7;
+  --primary-dark: #2f3ea0;
+  --secondary: #d28b50;
   --success: #0cce6b;
   --error: #ff4d4f;
   --warning: #faad14;
-  --bg-light: #f7f9fc;
+  --bg-light: #f4f5fb;
   --bg-white: #ffffff;
-  --text-primary: #1a1f36;
-  --text-secondary: #697386;
-  --border: #e3e8ee;
+  --text-primary: #252943;
+  --text-secondary: #66708a;
+  --border: #dfe2ef;
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
@@ -122,7 +122,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(84, 105, 212, 0.1);
+  box-shadow: 0 0 0 3px rgba(64, 84, 199, 0.12);
 }
 
 input::placeholder {

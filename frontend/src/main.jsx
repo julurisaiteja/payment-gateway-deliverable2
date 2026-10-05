@@ -6,6 +6,11 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 
+const DEMO_MODE = typeof window !== 'undefined' && (
+  window.location.hostname.endsWith('.workers.dev') ||
+  window.location.hostname.endsWith('.pages.dev')
+);
+
 function App() {
   return (
     <BrowserRouter>
@@ -13,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/transactions" element={<Transactions />} />
+        <Route path="/" element={<Navigate to={DEMO_MODE ? '/dashboard' : '/login'} replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

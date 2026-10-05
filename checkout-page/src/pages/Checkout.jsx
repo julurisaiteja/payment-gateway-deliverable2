@@ -2,8 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+const DEMO_MODE = typeof window !== 'undefined' && (
+  window.location.hostname.endsWith('.workers.dev') ||
+  window.location.hostname.endsWith('.pages.dev')
+);
+
 export default function Checkout() {
-  const [order, setOrder] = useState(null);
+  const [order, setOrder] = useState(DEMO_MODE ? { amount: 489900 } : null);
   const [method, setMethod] = useState(null);
   const [vpa, setVpa] = useState('');
   const [card, setCard] = useState({
@@ -19,7 +24,7 @@ export default function Checkout() {
   const [embedded, setEmbedded] = useState(false);
 
   const params = new URLSearchParams(window.location.search);
-  const orderId = params.get('order_id');
+  const orderId = params.get('order_id') || (DEMO_MODE ? 'DEMO-1048' : null);
   const embeddedParam = params.get('embedded');
   const isEmbedded = embeddedParam === 'true';
 
@@ -28,6 +33,7 @@ export default function Checkout() {
   }, [isEmbedded]);
 
   useEffect(() => {
+    if (DEMO_MODE) return;
     async function fetchOrder() {
       try {
         const res = await axios.get(
@@ -40,6 +46,18 @@ export default function Checkout() {
     }
     if (orderId) fetchOrder();
   }, [orderId]);
+
+  function completeDemoPayment() {
+    window.setTimeout(() => {
+      const id = `demo-pay-${Date.now()}`;
+      setPaymentId(id);
+      setStatus('success');
+      setProcessing(false);
+      if (embedded) {
+        window.parent.postMessage({ type: 'payment_success', data: { paymentId: id, status: 'success', demo: true } }, '*');
+      }
+    }, 650);
+  }
 
   async function pollFinalStatus(id) {
     try {
@@ -88,6 +106,10 @@ export default function Checkout() {
     setProcessing(true);
     setStatus(null);
     setErrorMessage('');
+    if (DEMO_MODE) {
+      completeDemoPayment();
+      return;
+    }
 
     try {
       const res = await axios.post(
@@ -126,6 +148,10 @@ export default function Checkout() {
     setProcessing(true);
     setStatus(null);
     setErrorMessage('');
+    if (DEMO_MODE) {
+      completeDemoPayment();
+      return;
+    }
 
     try {
       const [month, year] = card.expiry.split('/');
@@ -183,10 +209,10 @@ export default function Checkout() {
 
   const getMethodButtonStyle = (isSelected) => ({
     background: isSelected
-      ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      ? 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)'
       : 'white',
-    color: isSelected ? 'white' : '#1a1f36',
-    border: `2px solid ${isSelected ? '#667eea' : '#e3e8ee'}`,
+    color: isSelected ? 'white' : '#172b2a',
+    border: `2px solid ${isSelected ? '#0f766e' : '#dbe6e3'}`,
     padding: '20px',
     borderRadius: '12px',
     cursor: 'pointer',
@@ -197,7 +223,7 @@ export default function Checkout() {
     gap: '12px',
     fontWeight: '600',
     boxShadow: isSelected
-      ? '0 4px 12px rgba(102, 126, 234, 0.3)'
+      ? '0 4px 12px rgba(15, 118, 110, 0.3)'
       : '0 2px 4px rgba(0,0,0,0.08)',
     transform: isSelected ? 'scale(1.02)' : 'scale(1)',
   });
@@ -217,7 +243,7 @@ export default function Checkout() {
   };
 
   const retryButtonStyle = {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)',
     color: 'white',
     padding: '14px 32px',
     borderRadius: '8px',
@@ -225,7 +251,7 @@ export default function Checkout() {
     fontWeight: '600',
     border: 'none',
     cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+    boxShadow: '0 4px 12px rgba(15, 118, 110, 0.3)',
     transition: 'all 0.2s ease',
   };
 
@@ -244,7 +270,7 @@ export default function Checkout() {
     >
       <div
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)',
           color: 'white',
           padding: '32px 24px',
           textAlign: 'center',
@@ -255,19 +281,20 @@ export default function Checkout() {
           Secure Checkout
         </h2>
         <p style={{ opacity: 0.95, fontSize: '14px' }}>
-          Complete your payment securely
+          {DEMO_MODE ? 'Demo transaction · no charge will be made' : 'Complete your payment securely'}
         </p>
       </div>
 
       <div style={{ padding: '28px' }}>
+        {DEMO_MODE && <div role="status" style={{ marginBottom: '18px', padding: '10px 12px', borderRadius: '8px', background: '#e6f4f0', color: '#12645d', fontSize: '12px', fontWeight: '700' }}>SAMPLE ORDER · Simulated payment only. No card or UPI details are sent.</div>}
         <div
           data-test-id="order-summary"
           style={{
             padding: '20px',
-            background: '#f7f9fc',
+            background: '#f4f8f7',
             borderRadius: '12px',
             marginBottom: '28px',
-            border: '1px solid #e3e8ee',
+            border: '1px solid #dbe6e3',
           }}
         >
           <div
@@ -279,7 +306,7 @@ export default function Checkout() {
           >
             <span
               style={{
-                color: '#697386',
+                color: '#617573',
                 fontSize: '14px',
                 fontWeight: '500',
               }}
@@ -292,7 +319,7 @@ export default function Checkout() {
                 fontFamily: 'monospace',
                 fontSize: '13px',
                 fontWeight: '700',
-                color: '#1a1f36',
+                color: '#172b2a',
               }}
             >
               {orderId}
@@ -304,14 +331,14 @@ export default function Checkout() {
               justifyContent: 'space-between',
               alignItems: 'center',
               paddingTop: '12px',
-              borderTop: '1px solid #e3e8ee',
+              borderTop: '1px solid #dbe6e3',
             }}
           >
             <span
               style={{
                 fontSize: '16px',
                 fontWeight: '700',
-                color: '#1a1f36',
+                color: '#172b2a',
               }}
             >
               Amount to Pay
@@ -321,7 +348,7 @@ export default function Checkout() {
               style={{
                 fontSize: '28px',
                 fontWeight: '800',
-                color: '#5469d4',
+                color: '#0f766e',
               }}
             >
               {displayAmount}
@@ -339,7 +366,7 @@ export default function Checkout() {
                   fontSize: '15px',
                   fontWeight: '700',
                   marginBottom: '16px',
-                  color: '#1a1f36',
+                  color: '#172b2a',
                 }}
               >
                 Select Payment Method
@@ -387,7 +414,7 @@ export default function Checkout() {
                     fontSize: '14px',
                     fontWeight: '700',
                     marginBottom: '10px',
-                    color: '#1a1f36',
+                    color: '#172b2a',
                   }}
                 >
                   UPI ID / VPA
@@ -403,13 +430,13 @@ export default function Checkout() {
                     padding: '14px 16px',
                     fontSize: '15px',
                     borderRadius: '8px',
-                    border: '2px solid #e3e8ee',
+                    border: '2px solid #dbe6e3',
                   }}
                 />
                 <p
                   style={{
                     fontSize: '13px',
-                    color: '#697386',
+                    color: '#617573',
                     marginTop: '8px',
                   }}
                 >
@@ -438,7 +465,7 @@ export default function Checkout() {
                     fontSize: '14px',
                     fontWeight: '700',
                     marginBottom: '10px',
-                    color: '#1a1f36',
+                    color: '#172b2a',
                   }}
                 >
                   Card Number
@@ -456,7 +483,7 @@ export default function Checkout() {
                     padding: '14px 16px',
                     fontSize: '15px',
                     borderRadius: '8px',
-                    border: '2px solid #e3e8ee',
+                    border: '2px solid #dbe6e3',
                   }}
                 />
               </div>
@@ -475,7 +502,7 @@ export default function Checkout() {
                       fontSize: '14px',
                       fontWeight: '700',
                       marginBottom: '10px',
-                      color: '#1a1f36',
+                      color: '#172b2a',
                     }}
                   >
                     Expiry (MM/YY)
@@ -493,7 +520,7 @@ export default function Checkout() {
                       padding: '14px 16px',
                       fontSize: '15px',
                       borderRadius: '8px',
-                      border: '2px solid #e3e8ee',
+                      border: '2px solid #dbe6e3',
                     }}
                   />
                 </div>
@@ -504,7 +531,7 @@ export default function Checkout() {
                       fontSize: '14px',
                       fontWeight: '700',
                       marginBottom: '10px',
-                      color: '#1a1f36',
+                      color: '#172b2a',
                     }}
                   >
                     CVV
@@ -523,7 +550,7 @@ export default function Checkout() {
                       padding: '14px 16px',
                       fontSize: '15px',
                       borderRadius: '8px',
-                      border: '2px solid #e3e8ee',
+                      border: '2px solid #dbe6e3',
                     }}
                   />
                 </div>
@@ -535,7 +562,7 @@ export default function Checkout() {
                     fontSize: '14px',
                     fontWeight: '700',
                     marginBottom: '10px',
-                    color: '#1a1f36',
+                    color: '#172b2a',
                   }}
                 >
                   Cardholder Name
@@ -553,7 +580,7 @@ export default function Checkout() {
                     padding: '14px 16px',
                     fontSize: '15px',
                     borderRadius: '8px',
-                    border: '2px solid #e3e8ee',
+                    border: '2px solid #dbe6e3',
                   }}
                 />
               </div>
@@ -586,14 +613,14 @@ export default function Checkout() {
             style={{
               fontSize: '18px',
               fontWeight: '700',
-              color: '#1a1f36',
+              color: '#172b2a',
             }}
           >
             Processing payment...
           </span>
           <p
             style={{
-              color: '#697386',
+              color: '#617573',
               fontSize: '14px',
               marginTop: '12px',
             }}
@@ -620,21 +647,21 @@ export default function Checkout() {
               fontWeight: '700',
             }}
           >
-            Payment Successful!
+              {DEMO_MODE ? 'Demo Payment Complete' : 'Payment Successful!'}
           </h2>
           <div
             style={{
               padding: '16px',
-              background: '#f7f9fc',
+              background: '#f4f8f7',
               borderRadius: '12px',
               marginBottom: '16px',
-              border: '1px solid #e3e8ee',
+              border: '1px solid #dbe6e3',
             }}
           >
             <div
               style={{
                 fontSize: '12px',
-                color: '#697386',
+                color: '#617573',
                 marginBottom: '6px',
                 fontWeight: '600',
                 textTransform: 'uppercase',
@@ -648,7 +675,7 @@ export default function Checkout() {
                 fontFamily: 'monospace',
                 fontSize: '15px',
                 fontWeight: '700',
-                color: '#1a1f36',
+                color: '#172b2a',
               }}
             >
               {paymentId}
@@ -656,9 +683,9 @@ export default function Checkout() {
           </div>
           <span
             data-test-id="success-message"
-            style={{ color: '#697386', fontSize: '15px' }}
+            style={{ color: '#617573', fontSize: '15px' }}
           >
-            Your payment has been processed successfully
+            {DEMO_MODE ? 'Simulation complete. No funds were moved.' : 'Your payment has been processed successfully'}
           </span>
         </div>
 
